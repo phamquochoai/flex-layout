@@ -9,10 +9,11 @@ import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {filter, map} from 'rxjs/operators';
 
-import {BreakPointRegistry} from '../breakpoints/break-point-registry';
+import {mergeAlias} from '../add-alias';
 import {MediaChange} from '../media-change';
 import {MatchMedia} from '../match-media/match-media';
-import {mergeAlias} from '../add-alias';
+import {PrintHook} from '../media-marshaller/print-hook';
+import {BreakPointRegistry, OptionalBreakPoint} from '../breakpoints/break-point-registry';
 
 /**
  * Class internalizes a MatchMedia service and exposes an Observable interface.
@@ -64,7 +65,9 @@ export class MediaObserver {
   filterOverlaps = true;
   readonly media$: Observable<MediaChange>;
 
-  constructor(private breakpoints: BreakPointRegistry, private mediaWatcher: MatchMedia) {
+  constructor(protected breakpoints: BreakPointRegistry,
+      protected mediaWatcher: MatchMedia,
+      protected hook: PrintHook) {
     this.media$ = this.watchActivations();
   }
 
@@ -108,14 +111,20 @@ export class MediaObserver {
      * Inject associated (if any) alias information into the MediaChange event
      * Exclude mediaQuery activations for overlapping mQs. List bounded mQ ranges only
      */
-    return this.mediaWatcher.observe(mqList)
-      .pipe(
-        filter(change => change.matches),
-        filter(excludeOverlaps),
-        map((change: MediaChange) =>
-          mergeAlias(change, locator.findByQuery(change.mediaQuery))
-        )
-      );
+    return this.mediaWatcher.observe(this.hook.withPrintQuery(mqList))
+        .pipe(
+            filter(change => change.matches),
+            filter(excludeOverlaps),
+            map((change: MediaChange) => {
+              if (this.hook.isPrintEvent(change)) {
+                change = this.hook.updateEvent(change);
+              } else {
+                let bp: OptionalBreakPoint = locator.findByQuery(change.mediaQuery);
+                change = mergeAlias(change, bp);
+              }
+              return change;
+            })
+        );
   }
 
 

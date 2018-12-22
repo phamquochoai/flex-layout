@@ -21,14 +21,14 @@ describe('media-marshaller', () => {
     TestBed.configureTestingModule({
       providers: [MockMatchMediaProvider]
     });
-    spyOn(MediaMarshaller.prototype, 'activate').and.callThrough();
+    spyOn(MediaMarshaller.prototype, 'onMediaChange').and.callThrough();
     spyOn(MediaMarshaller.prototype, 'updateStyles').and.callThrough();
   });
 
   // Single async inject to save references; which are used in all tests below
   beforeEach(async(inject([MatchMedia, MediaMarshaller],
     (service: MockMatchMedia, marshal: MediaMarshaller) => {
-    matchMedia = service;      // inject only to manually activate mediaQuery ranges
+    matchMedia = service;      // inject only to manually onMediaChange mediaQuery ranges
     mediaMarshaller = marshal;
   })));
   afterEach(() => {
@@ -37,10 +37,10 @@ describe('media-marshaller', () => {
 
   it('activates when match-media activates', () => {
     matchMedia.activate('xs');
-    expect(mediaMarshaller.activate).toHaveBeenCalled();
+    expect(mediaMarshaller.onMediaChange).toHaveBeenCalled();
   });
 
-  it('doesn\'t activate when match-media activates the same breakpoint twice', () => {
+  it('doesn\'t onMediaChange when match-media activates the same breakpoint twice', () => {
     matchMedia.activate('xs');
     matchMedia.activate('xs');
     expect(mediaMarshaller.updateStyles).toHaveBeenCalledTimes(1);
@@ -48,10 +48,10 @@ describe('media-marshaller', () => {
 
   it('should set correct activated breakpoint', () => {
     matchMedia.activate('lg');
-    expect(mediaMarshaller.activatedBreakpoint).toBe('lg');
+    expect(mediaMarshaller.activatedAlias).toBe('lg');
 
     matchMedia.activate('gt-md');
-    expect(mediaMarshaller.activatedBreakpoint).toBe('gt-md');
+    expect(mediaMarshaller.activatedAlias).toBe('gt-md');
   });
 
   it('should init', () => {

@@ -189,7 +189,7 @@ describe('observable-media', () => {
       });
     });
 
-    it('can activate custom alias with custom mediaQueries', inject(
+    it('can onMediaChange custom alias with custom mediaQueries', inject(
       [MediaObserver, MatchMedia],
       (mediaObserver: MediaObserver, matchMedia: MockMatchMedia) => {
         let current: MediaChange;
