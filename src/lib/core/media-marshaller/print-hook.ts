@@ -103,8 +103,11 @@ export class PrintHook {
    */
   protected startPrinting(target: HookTarget, bp: OptionalBreakPoint) {
     if (!!bp) {
-      // Just add the print breakpoint as highest priority in the queue
-      target.activatedBreakpoints = [bp, ...target.activatedBreakpoints];
+      const bpInList = target.activatedBreakpoints.find(it => it.mediaQuery === bp.mediaQuery);
+      if (bpInList === undefined) {
+        // Just add the print breakpoint as highest priority in the queue
+        target.activatedBreakpoints = [bp, ...target.activatedBreakpoints];
+      }
     }
   }
 

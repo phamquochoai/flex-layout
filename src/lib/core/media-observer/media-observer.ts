@@ -101,6 +101,7 @@ export class MediaObserver {
    */
   private buildObservable(mqList: string[]): Observable<MediaChange> {
     const locator = this.breakpoints;
+    const printNotConfigured = (change:MediaChange) => change.mediaQuery !== '';
     const excludeOverlaps = (change: MediaChange) => {
       const bp = locator.findByQuery(change.mediaQuery);
       return !bp ? true : !(this.filterOverlaps && bp.overlapping);
@@ -108,8 +109,10 @@ export class MediaObserver {
 
     /**
      * Only pass/announce activations (not de-activations)
+     *
      * Inject associated (if any) alias information into the MediaChange event
-     * Exclude mediaQuery activations for overlapping mQs. List bounded mQ ranges only
+     * - Exclude mediaQuery activations for overlapping mQs. List bounded mQ ranges only
+     * - Exclude print activations that do not have an associated mediaQuery
      */
     return this.mediaWatcher.observe(this.hook.withPrintQuery(mqList))
         .pipe(
@@ -117,13 +120,12 @@ export class MediaObserver {
             filter(excludeOverlaps),
             map((change: MediaChange) => {
               if (this.hook.isPrintEvent(change)) {
-                change = this.hook.updateEvent(change);
-              } else {
-                let bp: OptionalBreakPoint = locator.findByQuery(change.mediaQuery);
-                change = mergeAlias(change, bp);
+                return this.hook.updateEvent(change);
               }
-              return change;
-            })
+              let bp: OptionalBreakPoint = locator.findByQuery(change.mediaQuery);
+              return mergeAlias(change, bp);
+            }),
+            filter(printNotConfigured)
         );
   }
 
